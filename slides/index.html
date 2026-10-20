@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>From Pony to Herd</title>
+  <link rel="stylesheet" href="vendor/reveal/reset.css">
+  <link rel="stylesheet" href="vendor/reveal/reveal.css">
+  <link rel="stylesheet" href="vendor/reveal/plugin/monokai.css">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================
+     INTRO
+     ============================================================ -->
+
+<!-- 1 · Cover -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <p class="eyebrow">Django Meetup · 20 October 2026</p>
+    <div style="margin-top:150px">
+      <h1>From Pony<br>to Herd</h1>
+      <p class="sub" style="font-size:56px !important;margin-top:28px">Microservices with Django</p>
+    </div>
+
+    <!-- motif: one pony (monolith) → a herd (services) -->
+    <div style="position:absolute;left:1208px;top:400px;display:flex;align-items:center;gap:40px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
+        <div style="width:220px;height:220px;border-radius:32px;background:var(--taupe)"></div>
+        <p class="eyebrow" style="letter-spacing:0.08em !important">1 pony</p>
+      </div>
+      <div class="arrow-h" style="flex:none;width:96px"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
+        <div style="display:grid;grid-template-columns:repeat(3,64px);gap:14px">
+          <div style="height:64px;border-radius:14px;background:var(--blue-deep)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-mid)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-soft)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-soft)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--orange)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-mid)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-pale)"></div>
+          <div style="height:64px;border-radius:14px;background:var(--blue-deep)"></div>
+        </div>
+        <p class="eyebrow" style="letter-spacing:0.08em !important">a herd</p>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:112px;right:112px;top:930px;height:2px;background:var(--dark-line)"></div>
+    <p class="soft" style="position:absolute;left:112px;top:962px;font-size:26px">Benedikt Bauer · Beyonder</p>
+    <img src="assets/beyonder-logo-light.png" alt="Beyonder" style="position:absolute;right:112px;top:950px;width:150px;margin:0">
+  </div>
+  <aside class="notes">
+    Welcome! The teaser promised to take Django from pony to herd. Django’s mascot is the magic pony; one pony is your classic Django project. Tonight we look at what happens when you turn it into a herd of small services: what that architecture is, what I learned doing it in a real IoT project, and a live demo of a few Django services talking to each other.
+  </aside>
+</section>
+
+<!-- 2 · About me -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="padding-left:888px;justify-content:center;gap:56px">
+    <img src="assets/me.jpg" alt="Benedikt Bauer" style="position:absolute;left:0;top:0;width:776px;height:1080px;object-fit:cover;object-position:50% 40%;margin:0">
+    <div class="head">
+      <p class="eyebrow">About me</p>
+      <h2 style="font-size:96px;line-height:1.05">Benedikt Bauer</h2>
+      <p class="sub" style="font-size:40px !important">IT Architect &amp; Full-Stack Developer</p>
+    </div>
+    <div style="display:flex;gap:72px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <p class="num" style="font-size:72px !important">2008</p>
+        <p class="soft">building software since</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <p class="num" style="font-size:72px !important">2024</p>
+        <p class="soft">IT Architect at Beyonder</p>
+      </div>
+    </div>
+    <div class="card" style="flex-direction:row;align-items:center;gap:32px;padding:32px 40px;align-self:flex-start">
+      <img src="assets/beyonder-logo-light.png" alt="Beyonder" style="width:200px;margin:0">
+      <p class="soft" style="font-size:28px">Beyonder DE, formerly Ambient Innovation</p>
+    </div>
+  </div>
+  <aside class="notes">
+    Most of you know me already, so very briefly: I’m Benedikt, IT Architect and full-stack developer at Beyonder, which many of you still know as Ambient Innovation. I’ve been building software since 2008 and moved into the architect role in 2024.
+  </aside>
+</section>
+
+<!-- 3 · Disclaimer -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Before we start</p>
+      <h2>Disclaimer: small herds only</h2>
+    </div>
+    <p style="font-size:42px;line-height:1.35;max-width:1500px">
+      Everything I’ll show comes from <span style="color:var(--blue-soft)">small-scale and IoT projects</span>, not from huge business operations.
+    </p>
+    <div class="cards c2">
+      <div class="card">
+        <div class="icon-title">
+          <div class="ico blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <h3>What I’ve seen</h3>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:12px">
+          <li>Small systems: a handful to a dozen services</li>
+          <li>IoT: devices sending telemetry, the cloud sending commands back</li>
+          <li>A real customer project: an IoT platform on .NET &amp; Azure</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon-title">
+          <div class="ico orange"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+          <h3>What I haven’t</h3>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:12px">
+          <li>Hundreds of services and dedicated platform teams</li>
+          <li>Netflix-scale traffic</li>
+          <li>Org charts that turned into architecture diagrams</li>
+        </ul>
+      </div>
+    </div>
+    <p style="color:var(--taupe);font-style:italic">So take everything tonight with a grain of hay.</p>
+  </div>
+  <aside class="notes">
+    Important disclaimer up front: I have only ever worked with microservices in small-scale and IoT projects, never in huge business operations with hundreds of services. The customer project I’ll talk about later is a .NET and Azure system, not Django, and I’ll keep the customer anonymous. The demo translates those ideas to Django. If you run 500 services at work, you’ll know things I don’t, and I’d love to hear them in the Q&amp;A.
+  </aside>
+</section>
+
+<!-- 3 · Agenda -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Today</p>
+      <h2>Agenda</h2>
+    </div>
+    <div style="flex:1"></div>
+    <div class="cards c4">
+      <div class="card" style="gap:20px">
+        <p class="num">01</p>
+        <p class="title">Microservices 101</p>
+        <p class="body">What the herd looks like, how it talks, and what it costs</p>
+      </div>
+      <div class="card" style="gap:20px">
+        <p class="num">02</p>
+        <p class="title">Lessons from the field</p>
+        <p class="body">A real IoT system: what worked and what hurt</p>
+      </div>
+      <div class="card" style="gap:20px">
+        <p class="num">03</p>
+        <p class="title">Live demo</p>
+        <p class="body">Pony Express: a herd of Django services delivering mail</p>
+      </div>
+      <div class="card" style="gap:20px">
+        <p class="num">04</p>
+        <p class="title">Pony or herd?</p>
+        <p class="body">When to split, and when to stay a monolith</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+  </div>
+  <aside class="notes">
+    Four parts. First the general idea of a microservice architecture. Then my experience from a real IoT customer project. Then a live demo in Django. Finally an honest look at when you should and shouldn’t do this.
+  </aside>
+</section>
+
+<!-- ============================================================
+     01 · MICROSERVICES 101
+     ============================================================ -->
+
+<!-- 4 · Section divider -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="justify-content:center;gap:24px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <p class="num" style="font-size:220px !important">01</p>
+    <h2 style="font-size:96px;max-width:1400px;line-height:1.08">What is a microservice architecture?</h2>
+    <p class="sub" style="margin-top:12px">And why would a Django developer care?</p>
+  </div>
+  <aside class="notes">
+    Let’s start with the basics, and with the thing most of us already have: a Django monolith.
+  </aside>
+</section>
+
+<!-- 5 · The monolith -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Where we start</p>
+      <h2>The pony: a classic Django monolith</h2>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 540px;gap:64px;align-items:center">
+      <!-- diagram -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="background:var(--light-panel);border:3px solid var(--ink);border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:24px">
+          <p class="eyebrow" style="text-align:center">my_project · one process · one deploy</p>
+          <div class="row4">
+            <div class="node svc">accounts<small>app</small></div>
+            <div class="node svc">catalog<small>app</small></div>
+            <div class="node svc">orders<small>app</small></div>
+            <div class="node svc">payments<small>app</small></div>
+          </div>
+        </div>
+        <div class="arrow-v"></div>
+        <div class="node db" style="width:520px;align-self:center">One shared database</div>
+      </div>
+      <!-- notes -->
+      <ul class="checks">
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>One codebase, one deploy</li>
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Joins and transactions just work</li>
+        <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>Everything scales together</li>
+        <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>One bad deploy takes it all down</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    This is what most Django projects look like, and that’s a good thing. Several apps inside one project, one process, one deployment, one database. You get foreign keys across apps, transactions, the ORM everywhere, and one thing to deploy. The downsides only show up with growth: you can’t scale the orders part without scaling everything, and one bad migration or bug affects the whole system.
+  </aside>
+</section>
+
+<!-- 6 · The herd -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Where we’re going</p>
+      <h2>The herd: the same apps, as services</h2>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 540px;gap:64px;align-items:center">
+      <!-- diagram -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="node gw">Frontend / API gateway</div>
+        <div class="row4 center"><div class="arrow-v"></div><div class="arrow-v"></div><div class="arrow-v"></div><div class="arrow-v"></div></div>
+        <div class="row4">
+          <div class="node svc">accounts<small>own deploy</small><span class="node chip db"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>own DB</span></div>
+          <div class="node svc">catalog<small>own deploy</small><span class="node chip db"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>own DB</span></div>
+          <div class="node svc">orders<small>own deploy</small><span class="node chip db"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>own DB</span></div>
+          <div class="node svc">payments<small>own deploy</small><span class="node chip db"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>own DB</span></div>
+        </div>
+        <div class="row4 center"><div class="arrow-v both dashed"></div><div class="arrow-v both dashed"></div><div class="arrow-v both dashed"></div><div class="arrow-v both dashed"></div></div>
+        <div class="node bus">Message broker · events like <code>order.placed</code></div>
+      </div>
+      <!-- notes -->
+      <ul class="checks">
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span>Each service owns its data</li>
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>Ships on its own schedule</li>
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>Talks via HTTP or events</li>
+        <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>Fails on its own (ideally)</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    Same four apps, but now each one is its own service: its own process, its own deployment, its own database. Nobody else touches that database; if orders needs a user’s email, it asks accounts over the network. A gateway or frontend sits in front and routes requests. Services that don’t need an immediate answer talk through a message broker: orders publishes “order placed”, and whoever cares reacts.
+  </aside>
+</section>
+
+<!-- 7 · Definition -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="justify-content:center;gap:40px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <p class="eyebrow">The definition</p>
+    <p style="font-size:54px;line-height:1.35;max-width:1560px;font-weight:500">
+      “…an approach to developing a single application as a suite of <span style="color:var(--blue-soft)">small services</span>, each <span style="color:var(--blue-soft)">running in its own process</span> and communicating with <span style="color:var(--blue-soft)">lightweight mechanisms</span>, often an HTTP resource API.”
+    </p>
+    <p style="color:var(--taupe);font-size:28px">James Lewis &amp; Martin Fowler, “Microservices” (2014)</p>
+  </div>
+  <aside class="notes">
+    The most quoted definition, from James Lewis and Martin Fowler’s 2014 article. The quote continues: “These services are built around business capabilities and independently deployable by fully automated deployment machinery.” Note what it says: it is still a single application. Microservices are a way to build one product, not a pile of unrelated apps.
+  </aside>
+</section>
+
+<!-- 8 · Six traits -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">In practice</p>
+      <h2>Six traits of a microservice</h2>
+    </div>
+    <div class="cards c3" style="flex:1;align-content:center">
+      <div class="card">
+        <div class="icon-title"><span class="ico blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><p class="title">One business capability</p></div>
+        <p class="body">Orders, payments, sensor data: one job per service.</p>
+      </div>
+      <div class="card">
+        <div class="icon-title"><span class="ico blue"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span><p class="title">Owns its data</p></div>
+        <p class="body">No shared database. Others ask through an API.</p>
+      </div>
+      <div class="card">
+        <div class="icon-title"><span class="ico blue"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span><p class="title">Deploys independently</p></div>
+        <p class="body">Ship orders without redeploying payments.</p>
+      </div>
+      <div class="card">
+        <div class="icon-title"><span class="ico blue"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><p class="title">Lightweight protocols</p></div>
+        <p class="body">HTTP/REST, gRPC, or events through a broker.</p>
+      </div>
+      <div class="card">
+        <div class="icon-title"><span class="ico blue"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><p class="title">Picks its own tools</p></div>
+        <p class="body">Django here, FastAPI there, C on the device.</p>
+      </div>
+      <div class="card">
+        <div class="icon-title"><span class="ico orange"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><p class="title">Designed for failure</p></div>
+        <p class="body">The network will fail. Plan for timeouts, retries and fallbacks.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    If you want a checklist, these six traits come up in almost every description. The first two are the hard ones. Splitting by business capability, not by technical layer, and really not sharing the database. Most “microservices” that hurt are a distributed monolith: separate deployments, but they share a database or must be deployed together.
+  </aside>
+</section>
+
+<!-- 9 · How services talk -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Communication</p>
+      <h2>How the herd talks</h2>
+    </div>
+    <div class="cards c2" style="flex:1;align-content:center">
+      <!-- sync -->
+      <div class="card" style="gap:32px">
+        <div class="icon-title">
+          <span class="ico"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+          <div><h3>Synchronous</h3><p class="soft" style="font-size:26px">request / response</p></div>
+        </div>
+        <div class="dark-nodes" style="display:flex;align-items:center;gap:16px;height:150px">
+          <div class="node svc" style="width:170px">orders</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:22px;align-items:stretch">
+            <p style="font-size:24px;text-align:center;color:var(--cream-soft)"><code>GET /accounts/42</code></p>
+            <div class="arrow-h" style="flex:none"></div>
+            <div class="arrow-h back" style="flex:none"></div>
+            <p style="font-size:24px;text-align:center;color:var(--cream-soft)"><code>200 OK</code></p>
+          </div>
+          <div class="node svc" style="width:170px">accounts</div>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:8px">
+          <li><span style="color:var(--blue-soft);font-weight:600">+</span>&nbsp; Simple, with an immediate answer</li>
+          <li><span style="color:var(--orange);font-weight:600">−</span>&nbsp; Caller waits, and fails if the callee is down</li>
+        </ul>
+        <p class="eyebrow" style="letter-spacing:0.06em !important;text-transform:none !important">REST · gRPC · GraphQL</p>
+      </div>
+      <!-- async -->
+      <div class="card" style="gap:32px">
+        <div class="icon-title">
+          <span class="ico"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
+          <div><h3>Asynchronous</h3><p class="soft" style="font-size:26px">events through a broker</p></div>
+        </div>
+        <div class="dark-nodes" style="display:flex;align-items:center;gap:12px;height:150px">
+          <div class="node svc">orders</div>
+          <div class="arrow-h"></div>
+          <div class="node bus">broker<small><code>order.placed</code></small></div>
+          <div style="flex:1.3;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:12px"><div class="arrow-h"></div><div class="node svc" style="flex:none;width:160px">payments</div></div>
+            <div style="display:flex;align-items:center;gap:12px"><div class="arrow-h"></div><div class="node svc" style="flex:none;width:160px">mailer</div></div>
+          </div>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:8px">
+          <li><span style="color:var(--blue-soft);font-weight:600">+</span>&nbsp; Loosely coupled, rides out outages</li>
+          <li><span style="color:var(--orange);font-weight:600">−</span>&nbsp; Eventually consistent, harder to debug</li>
+        </ul>
+        <p class="eyebrow" style="letter-spacing:0.06em !important;text-transform:none !important">RabbitMQ · Redis · Kafka · MQTT · Azure Service Bus</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    There are two basic ways services talk. Synchronous: orders calls accounts over HTTP and waits. Easy to understand, and it feels like calling a function, but if accounts is down, orders is down too. Asynchronous: orders publishes an event to a broker and moves on; payments and the mailer pick it up when they’re ready. Much more resilient, but now your data is only eventually consistent and a bug can hide in a queue. In IoT you get async almost for free: devices already talk MQTT or similar. Real systems mix both, as we’ll see in the customer project.
+  </aside>
+</section>
+
+<!-- 10 · Trade-offs -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">The bill</p>
+      <h2>What you gain, what you pay</h2>
+    </div>
+    <div class="cards c2" style="flex:1;align-content:center">
+      <div class="card" style="gap:32px;padding:48px">
+        <h3>What you gain</h3>
+        <ul class="checks">
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Deploy and scale parts independently</li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Failures stay contained, if you design for it</li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Teams own a service end to end</li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>The right tool for each job</li>
+        </ul>
+      </div>
+      <div class="card" style="gap:32px;padding:48px">
+        <h3>What you pay</h3>
+        <ul class="checks">
+          <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>Every call can be slow or fail</li>
+          <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>No joins or transactions across services</li>
+          <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>More to deploy, monitor and trace</li>
+          <li><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>Local dev and testing get harder</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    Microservices are a trade. On the left are the benefits, and they are real, but most of them only pay off once you have several teams or very uneven load. On the right is what you pay from day one. Every in-process function call is now a network call that can time out. Your ORM can’t join across services and you lose database transactions. You need deployment pipelines, monitoring and tracing for every service. And running the whole thing on your laptop gets harder.
+  </aside>
+</section>
+
+<!-- 11 · Statement -->
+<section data-background-color="#3542C0" class="statement">
+  <div class="frame" style="gap:40px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <p class="eyebrow" style="color:var(--blue-pale)">So far</p>
+    <h2>Start with the pony.<br>Grow the herd when it hurts.</h2>
+    <p style="color:var(--blue-pale);max-width:1640px">Martin Fowler calls this “MonolithFirst” (2015). Next: what a herd looks like in a real IoT project.</p>
+  </div>
+  <aside class="notes">
+    If you remember one thing from this first part: start with a well-structured Django monolith with clean app boundaries. Split out a service when a concrete pain forces you to: a part that needs to scale differently, a team that keeps blocking another, or a different technology. Martin Fowler wrote this up as “MonolithFirst” in 2015. Now let’s look at a project where the herd already existed.
+  </aside>
+</section>
+
+<!-- ============================================================
+     02 · LESSONS FROM THE FIELD
+     (customer project: keep anonymous, no name, no domain)
+     ============================================================ -->
+
+<!-- 13 · Section divider -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="justify-content:center;gap:24px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <p class="num" style="font-size:220px !important">02</p>
+    <h2 style="font-size:96px;max-width:1400px;line-height:1.08">Lessons from the field</h2>
+    <p class="sub" style="margin-top:12px">A real IoT customer project, from sensor to dashboard and back</p>
+  </div>
+  <aside class="notes">
+    Part two: a real customer project I work on. I can’t name the customer, so I’ll keep it at the level of “IoT devices in the field”. It’s built with .NET and Azure, not Django, but the architecture ideas carry over one to one.
+  </aside>
+</section>
+
+<!-- 14 · The setup -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">The setup</p>
+      <h2>Devices in the field, far from the cloud</h2>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:40px">
+      <div class="card" style="width:420px;align-items:flex-start;gap:20px">
+        <span class="ico blue"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></span>
+        <h3>IoT device</h3>
+        <p class="body">Out in the field, often kilometres from the nearest office</p>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:20px;align-items:center">
+        <p class="soft" style="font-size:26px">mobile network · not always online</p>
+        <div style="width:100%;height:0;border-top:4px dashed var(--taupe)"></div>
+        <p class="soft" style="font-size:26px">kilometres of distance</p>
+      </div>
+      <div class="card" style="width:420px;align-items:flex-start;gap:20px">
+        <span class="ico blue"><svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
+        <h3>Our cloud</h3>
+        <p class="body">Azure, about a dozen services, built with .NET</p>
+      </div>
+    </div>
+    <div class="cards c3">
+      <div class="card" style="gap:12px">
+        <div class="icon-title"><span class="ico sm"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><p class="title">Sensors</p></div>
+        <p class="body">Measurements, values and heartbeats: small and frequent</p>
+      </div>
+      <div class="card" style="gap:12px">
+        <div class="icon-title"><span class="ico sm"><svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span><p class="title">Cameras</p></div>
+        <p class="body">Images: big files that arrive in bursts</p>
+      </div>
+      <div class="card" style="gap:12px">
+        <div class="icon-title"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><p class="title">Actuators</p></div>
+        <p class="body">Commands from operators travel back to the device</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    The setup: IoT devices with sensors and cameras, deployed in the field, often kilometres away from anything, connected over a mobile network that isn’t always there. On the other side is our cloud: Azure, about a dozen services, built with .NET. Three kinds of traffic: sensor data that is small and frequent, camera images that are big and come in bursts, and commands that operators send back to the device.
+  </aside>
+</section>
+
+<!-- 15 · Big picture -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">The big picture</p>
+      <h2>From the field to the screen and back</h2>
+    </div>
+    <div style="position:relative;width:1696px;height:650px">
+      <svg viewBox="0 0 1696 650" width="1696" height="650" style="position:absolute;left:0;top:0" aria-hidden="true">
+        <defs>
+          <marker id="bp-ah" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#766C5B"/></marker>
+          <marker id="bp-ah-o" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#F26B43"/></marker>
+        </defs>
+        <g stroke="#766C5B" stroke-width="3" fill="none" marker-end="url(#bp-ah)">
+          <path d="M262 215 H336"/><path d="M262 475 H336"/>
+          <path d="M722 215 H796"/><path d="M722 475 H796"/>
+          <!-- one fork from the middle of Processing: both outputs get everything -->
+          <path d="M1182 345 H1220 V215 H1256"/><path d="M1182 345 H1220 V475 H1256"/>
+        </g>
+        <circle cx="1220" cy="345" r="6" fill="#766C5B"/>
+        <path d="M1478 108 V54 H130 V106" stroke="#F26B43" stroke-width="4" stroke-dasharray="14 10" fill="none" marker-end="url(#bp-ah-o)"/>
+      </svg>
+      <p style="position:absolute;left:340px;top:0;width:840px;text-align:center;font-size:24px;font-weight:600;color:#B7411D">Reverse path: operator input becomes a command for the device</p>
+
+      <div class="box" style="left:0;top:110px;width:260px;height:470px;justify-content:center;align-items:center;text-align:center;gap:14px">
+        <span class="ico blue"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></span>
+        <p class="t">IoT device</p>
+        <p class="d">sensors<br>cameras<br>actuators</p>
+      </div>
+
+      <div class="box" style="left:340px;top:110px;width:380px;height:210px;justify-content:center">
+        <p class="t">Sensor data</p>
+        <p class="d">MQTT → IoT Hub → Service Bus</p>
+      </div>
+      <div class="box" style="left:340px;top:370px;width:380px;height:210px;justify-content:center">
+        <p class="t">Images</p>
+        <p class="d">FTP → Blob storage → Event Grid</p>
+      </div>
+
+      <div class="box" style="left:800px;top:110px;width:380px;height:470px;justify-content:space-around">
+        <div style="background:var(--light-panel);border-radius:12px;padding:18px 20px">
+          <p class="t" style="font-size:28px">Normalise &amp; store</p>
+          <p class="d">Stream Analytics, time series</p>
+        </div>
+        <div style="background:var(--blue-pale);border-radius:12px;padding:18px 20px">
+          <p class="t" style="font-size:28px;color:var(--blue-deep)">AI image analysis</p>
+          <p class="d">Object detection on Azure ML</p>
+        </div>
+      </div>
+
+      <div class="box accent" style="left:1260px;top:110px;width:436px;height:210px;justify-content:center">
+        <p class="t">ControlCenter</p>
+        <p class="d">Dashboard, live data, image review</p>
+      </div>
+      <div class="box" style="left:1260px;top:370px;width:436px;height:210px;justify-content:center;background:#FDE1D8;border-color:#F6C3B2">
+        <p class="t">Alerts</p>
+        <p class="d">Incidents and email, a separate track</p>
+      </div>
+
+      <p class="eyebrow" style="position:absolute;left:0;top:612px;width:260px;text-align:center">Device</p>
+      <p class="eyebrow" style="position:absolute;left:340px;top:612px;width:380px;text-align:center">Ingestion</p>
+      <p class="eyebrow" style="position:absolute;left:800px;top:612px;width:380px;text-align:center">Processing</p>
+      <p class="eyebrow" style="position:absolute;left:1260px;top:612px;width:436px;text-align:center">Output</p>
+    </div>
+  </div>
+  <aside class="notes">
+    The whole system on one slide. Left to right: the device sends two kinds of data. Ingestion takes sensor data over MQTT through IoT Hub, and images over FTP into blob storage. Processing normalises and stores the telemetry and runs AI on the images. On the output side there are two separate things: the ControlCenter dashboard, and an alerts track that sends incidents by email. And the orange line on top is the reverse path: what an operator does in the ControlCenter ends up as a command on the device in the field.
+  </aside>
+</section>
+
+<!-- 16 · Ingestion -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Ingestion</p>
+      <h2>Two kinds of data, two ways in</h2>
+    </div>
+    <div class="cards c2" style="flex:1;align-content:center">
+      <div class="card" style="gap:28px">
+        <div class="icon-title">
+          <span class="ico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+          <div><h3>Sensor telemetry</h3><p class="soft" style="font-size:26px">small messages, all the time</p></div>
+        </div>
+        <div class="flow">
+          <span class="pill">Device</span><span class="step"><span class="to">→</span><span class="pill hl">MQTT</span></span><span class="step"><span class="to">→</span><span class="pill">IoT Hub</span></span><span class="step"><span class="to">→</span><span class="pill">Service Bus</span></span><span class="step"><span class="to">→</span><span class="pill">Stream Analytics</span></span><span class="step"><span class="to">→</span><span class="pill">Service Bus topics</span></span>
+        </div>
+        <p class="body">Every service subscribes to the topics it needs: time series, alerts, device controller, health checks.</p>
+      </div>
+      <div class="card" style="gap:28px">
+        <div class="icon-title">
+          <span class="ico"><svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+          <div><h3>Camera images</h3><p class="soft" style="font-size:26px">big files, in bursts</p></div>
+        </div>
+        <div class="flow">
+          <span class="pill">Camera</span><span class="step"><span class="to">→</span><span class="pill hl">FTP</span></span><span class="step"><span class="to">→</span><span class="pill">FTP server</span></span><span class="step"><span class="to">→</span><span class="pill">Blob storage</span></span><span class="step"><span class="to">→</span><span class="pill">Event Grid</span></span><span class="step"><span class="to">→</span><span class="pill">Service Bus</span></span>
+        </div>
+        <p class="body">Images never go through IoT Hub. The upload itself is the event that starts the pipeline.</p>
+      </div>
+    </div>
+    <p style="color:var(--taupe)">Pick the transport per kind of data, then meet on the same message bus.</p>
+  </div>
+  <aside class="notes">
+    Ingestion has two roads. Sensor telemetry is small and frequent: the device talks MQTT to Azure IoT Hub, IoT Hub routes everything onto Service Bus, Stream Analytics normalises it, and the result lands on Service Bus topics. Each service subscribes to what it needs. That’s the publish/subscribe part from the theory section, in practice. Images are different: big and bursty, so they don’t go through IoT Hub at all. The camera uploads over FTP into blob storage, and the upload itself is the event: Event Grid notices the new blob and puts a message on Service Bus. Two transports, one message bus.
+  </aside>
+</section>
+
+<!-- 17 · AI processing -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Processing with AI</p>
+      <h2>An AI pipeline without a REST API</h2>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:40px">
+      <div style="display:grid;grid-template-columns:1fr 44px 1fr 44px 1fr 44px 1fr 44px 1fr;align-items:center">
+        <div class="card" style="padding:28px;gap:10px;height:100%;box-sizing:border-box"><p class="num" style="font-size:40px !important">01</p><p class="title">Uploaded</p><p class="body" style="font-size:24px">Blob event, routed by Event Grid</p></div>
+        <div class="arrow-h" style="flex:none;margin:0 8px 0 4px;background:var(--taupe-ink)"></div>
+        <div class="card" style="padding:28px;gap:10px;height:100%;box-sizing:border-box"><p class="num" style="font-size:40px !important">02</p><p class="title">Move</p><p class="body" style="font-size:24px">Check device and location, copy to the image store</p></div>
+        <div class="arrow-h" style="flex:none;margin:0 8px 0 4px;background:var(--taupe-ink)"></div>
+        <div class="card" style="padding:28px;gap:10px;height:100%;box-sizing:border-box;border-color:var(--blue-soft)"><p class="num" style="font-size:40px !important">03</p><p class="title">Analyse</p><p class="body" style="font-size:24px">YOLO models on Azure ML: is there an object, and which class?</p></div>
+        <div class="arrow-h" style="flex:none;margin:0 8px 0 4px;background:var(--taupe-ink)"></div>
+        <div class="card" style="padding:28px;gap:10px;height:100%;box-sizing:border-box"><p class="num" style="font-size:40px !important">04</p><p class="title">Verify</p><p class="body" style="font-size:24px">Auto-verify above a confidence threshold, sample the rest</p></div>
+        <div class="arrow-h" style="flex:none;margin:0 8px 0 4px;background:var(--taupe-ink)"></div>
+        <div class="card" style="padding:28px;gap:10px;height:100%;box-sizing:border-box"><p class="num" style="font-size:40px !important">05</p><p class="title">Publish</p><p class="body" style="font-size:24px">Results to analytics and the dashboard</p></div>
+      </div>
+      <div class="cards c2">
+        <div class="card" style="gap:12px">
+          <div class="icon-title"><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span><p class="title">Glued together by messages</p></div>
+          <p class="body">Each step is an Azure Function with a Service Bus topic in between, so each step scales and fails on its own.</p>
+        </div>
+        <div class="card" style="gap:12px">
+          <div class="icon-title"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><p class="title">Humans in the loop</p></div>
+          <p class="body">Operators verify or correct results in the ControlCenter. Their decisions go back into the pipeline as messages.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    The image pipeline is my favourite part, because it has no REST API at all. A new image in blob storage is an event. Step one routes it, step two checks which device and location it belongs to and moves it, step three sends it to object-detection models (YOLO) hosted on Azure Machine Learning endpoints, step four auto-verifies results above a confidence threshold and samples the rest for humans, and step five publishes the results. Every step is an Azure Function, and between every step there is a Service Bus topic. If the AI endpoint is slow, messages simply wait in the queue. And humans are part of the loop: operators verify or correct detections in the dashboard, and those corrections flow back as messages too.
+  </aside>
+</section>
+
+<!-- 18 · Output -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Output</p>
+      <h2>A dashboard and an alarm bell</h2>
+    </div>
+    <div class="cards c2" style="flex:1;align-content:center">
+      <div class="card" style="gap:28px">
+        <div class="icon-title">
+          <span class="ico blue"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+          <div><h3>ControlCenter</h3><p class="soft" style="font-size:26px">the dashboard</p></div>
+        </div>
+        <div class="flow">
+          <span class="pill">Next.js</span><span class="step"><span class="to">→</span><span class="pill">API gateway</span></span><span class="step"><span class="to">→</span><span class="pill hl">BFF</span></span><span class="step"><span class="to">→</span><span class="pill">core services</span></span>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:10px">
+          <li>Live device status, refreshed every 5 seconds</li>
+          <li>Sensor history and analytics</li>
+          <li>Image feed with human review</li>
+          <li>Sends operator commands back to the device</li>
+        </ul>
+      </div>
+      <div class="card" style="gap:28px">
+        <div class="icon-title">
+          <span class="ico orange"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+          <div><h3>Alerts</h3><p class="soft" style="font-size:26px">a separate track</p></div>
+        </div>
+        <div class="flow">
+          <span class="pill">telemetry topics</span><span class="step"><span class="to">→</span><span class="pill hl">Alerts service</span></span><span class="step"><span class="to">→</span><span class="pill">incident</span></span><span class="step"><span class="to">→</span><span class="pill">email</span></span>
+        </div>
+        <ul class="body" style="display:flex;flex-direction:column;gap:10px">
+          <li>Critical alert codes open an incident and send an email</li>
+          <li>No heartbeat for about 5 minutes: “lost heartbeat” incident</li>
+          <li>Emails are deduplicated per hour</li>
+        </ul>
+      </div>
+    </div>
+    <p style="color:var(--taupe)">Alerts listen to the bus, not to the dashboard. If the ControlCenter is down, the emails still go out.</p>
+  </div>
+  <aside class="notes">
+    Two outputs. The ControlCenter is the dashboard: a Next.js frontend behind an API gateway, talking to a backend-for-frontend that aggregates the core services. Operators see live device status, history, the AI image feed, and they can send commands. Alerts are deliberately a separate track: the alerts service subscribes to the same telemetry topics, decides per alert code whether to open an incident, and sends email. A scheduled job notices devices that went silent. The important design point: alerts don’t depend on the dashboard. If the frontend is down or being deployed, operators still get their emails.
+  </aside>
+</section>
+
+<!-- 19 · Reverse path -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">The reverse path</p>
+      <h2>From a click to the device, and back</h2>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:40px">
+      <div style="display:grid;grid-template-columns:1fr 48px 1fr 48px 1fr 48px 1fr 48px 1fr 48px 1fr;row-gap:16px;align-items:center">
+        <p class="eyebrow" style="grid-column:span 11;color:#B7411D">Command</p>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">ControlCenter<small>operator clicks</small></div>
+        <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">API gateway<small>auth</small></div>
+        <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">BFF<small>ControlCenter API</small></div>
+        <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">Device service<small>logs it</small></div>
+        <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">IoT Hub<small>cloud-to-device</small></div>
+        <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px;border-color:var(--orange)">Device<small>executes</small></div>
+
+        <p class="eyebrow" style="grid-column:span 9;align-self:end;color:var(--blue-deep)">Confirmation</p>
+        <div style="grid-column:span 2;justify-self:end;width:242px"><div class="arrow-v"></div></div>
+
+        <div class="node svc" style="grid-column:span 5;font-size:26px;padding:16px 12px">Dashboard shows the new state<small>polls every 5 seconds</small></div>
+        <div class="arrow-h blue back" style="flex:none;margin:0 6px 0 10px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">Device service<small>last-known state</small></div>
+        <div class="arrow-h blue back" style="flex:none;margin:0 6px 0 10px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">Ingestion<small>same pipeline</small></div>
+        <div class="arrow-h blue back" style="flex:none;margin:0 6px 0 10px"></div>
+        <div class="node svc" style="font-size:26px;padding:16px 12px">Device<small>reports new state</small></div>
+      </div>
+      <div class="cards c3">
+        <div class="card" style="gap:10px;padding:28px 32px">
+          <div class="icon-title"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span><p class="title">Fire and forget</p></div>
+          <p class="body" style="font-size:26px">No acknowledgement. The next telemetry message is the confirmation.</p>
+        </div>
+        <div class="card" style="gap:10px;padding:28px 32px">
+          <div class="icon-title"><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span><p class="title">Audit log</p></div>
+          <p class="body" style="font-size:26px">Every command is written down: who sent what, and when.</p>
+        </div>
+        <div class="card" style="gap:10px;padding:28px 32px">
+          <div class="icon-title"><span class="ico sm blue"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><p class="title">Local control wins</p></div>
+          <p class="body" style="font-size:26px">Commands are blocked while a local controller is in charge.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    The ControlCenter isn’t only a screen; it’s also the way back to the device. An operator clicks, the request goes through the API gateway to the backend-for-frontend, to the device controller service, which logs the command and sends it as an IoT Hub cloud-to-device message. It’s fire-and-forget: there is no explicit acknowledgement. How do we know it worked? The device reports its new state as ordinary telemetry, through the same ingestion pipeline. The device controller keeps the last-known state, and the dashboard polls it every five seconds. That’s eventual consistency you can watch with your own eyes: you click, and a few seconds later the state changes.
+  </aside>
+</section>
+
+<!-- 20 · Conclusions: what the bus buys us -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Conclusions</p>
+      <h2>What the message bus buys us</h2>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:392px 1fr;gap:48px;min-height:0">
+      <img src="assets/pony-queue.jpg" alt="A long queue of children waiting at a closed gate for Django pony rides" style="width:392px;height:100%;object-fit:cover;object-position:50% 50%;border-radius:20px;margin:0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:20px">
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><p class="title">Fault tolerant</p></div>
+          <p class="body" style="font-size:26px">Receiver down? Messages wait on the bus. Sender down? Receivers just idle.</p>
+        </div>
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></svg></span><p class="title">Easy fan-out</p></div>
+          <p class="body" style="font-size:26px">A new receiver only subscribes to a topic. Nobody else has to change.</p>
+        </div>
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span><p class="title">Logging for free</p></div>
+          <p class="body" style="font-size:26px">A logging service can simply subscribe to every topic.</p>
+        </div>
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm blue"><svg viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span><p class="title">Parallel by design</p></div>
+          <p class="body" style="font-size:26px">Every message stands alone, so add more AI workers. Hundreds of devices already send in parallel.</p>
+        </div>
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></span><p class="title">Bursts and outages?</p></div>
+          <p class="body" style="font-size:26px">The queue just grows. Fix: parallel consumers, or separate input and output queues.</p>
+        </div>
+        <div class="card" style="padding:22px 30px;gap:8px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><p class="title">The bus itself down?</p></div>
+          <p class="body" style="font-size:26px">No local cache, so the data is lost. A deliberate choice on cost and complexity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    So what does all this buy us? The picture says it: the gate to the pony rides is closed, but nobody gets lost. The queue just waits until the gate opens again. Fault tolerance first: if a receiver is down, its messages simply stay on the bus and get picked up later. If a sender is down, the receivers just have nothing to do; nothing else breaks. Fan-out is trivial: a new consumer subscribes to a topic and nobody else has to change. That also means logging comes almost for free: a logging service that subscribes to every topic. And because every message stands on its own, we can process them in parallel: spin up more AI workers if images pile up. In the real system there are hundreds of devices sending at the same time, so it’s parallel by nature.
+    Two honest questions. What if a receiver is down for a long time, or a burst comes in? In our simple setup, the queue just gets longer and longer. You can add parallel consumers or split input and output into separate queues. And what if the bus itself is down? In this project there’s no local cache or buffer, so that data is lost. That was a deliberate decision by the customer: a local cache would be easy to add, but it costs money and adds complexity.
+  </aside>
+</section>
+
+<!-- 21 · Downsides: what the herd costs us -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Downsides</p>
+      <h2>What the herd costs us</h2>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:440px 1fr;gap:48px;min-height:0">
+      <div class="card" style="justify-content:center;gap:40px;padding:48px;background:var(--ink);border-color:var(--ink)">
+        <div>
+          <p class="num" style="font-size:150px !important;color:var(--blue-soft)">43</p>
+          <p style="font-size:30px;color:var(--cream);margin-top:12px">git repositories</p>
+        </div>
+        <div>
+          <p class="num" style="font-size:150px !important;color:var(--orange)">2×</p>
+          <p style="font-size:30px;color:var(--cream);margin-top:12px">as many Azure services</p>
+        </div>
+        <p style="font-size:24px;color:var(--cream-soft)">for the one system from the last section</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:24px">
+        <div class="card" style="padding:36px;gap:14px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><p class="title">Hard to find your way</p></div>
+          <p class="body">Who sends this message, and who reads it? If you don’t know where to look, you’re lost.</p>
+        </div>
+        <div class="card" style="padding:36px;gap:14px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span><p class="title">Debugging needs a bus</p></div>
+          <p class="body">Services push and pull on their own, with no endpoint to call. To trigger anything, you run a message queue.</p>
+        </div>
+        <div class="card" style="padding:36px;gap:14px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><p class="title">SPAs need a translator</p></div>
+          <p class="body">The frontend speaks REST, the services speak messages. A Backend-for-Frontend sits in between.</p>
+        </div>
+        <div class="card" style="padding:36px;gap:14px">
+          <div class="icon-title" style="gap:18px"><span class="ico sm orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><p class="title">No skipping the queue</p></div>
+          <p class="body">Nothing happens instantly. Every message waits its turn.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    Now the bill. The system I just showed you lives in 43 git repositories, and roughly twice as many Azure services. That is massive complexity for what is, from the outside, one product. Navigating it is a mess if you don’t already know where to look: who publishes this message, who subscribes to it? Debugging is different too. The services don’t have endpoints you can just call; they push and pull messages on their own. So you can’t “trigger” an action: to debug anything locally, you spin up a message queue and feed it messages. A single-page app speaks REST, not Service Bus, so you need a Backend-for-Frontend that translates between the two. And nothing happens instantly: there is no skipping the queue.
+  </aside>
+</section>
+
+<!-- 22 · Downsides: when order matters -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="gap:36px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Downsides</p>
+      <h2>When order matters, the bus bites</h2>
+    </div>
+    <div class="dark-nodes" style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow" style="color:var(--blue-soft)">What we expect</p>
+      <div style="display:grid;grid-template-columns:1fr 56px 1fr 56px 1fr 56px 1fr 56px 1fr;align-items:center">
+        <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Order<small>placed</small></div>
+        <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Payment<small>charged</small></div>
+        <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Inventory<small>stock reserved</small></div>
+        <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Shipping<small>parcel sent</small></div>
+        <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+        <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;border-color:var(--blue-soft)">Customer<small>happy</small></div>
+      </div>
+    </div>
+    <div class="dark-nodes" style="display:flex;flex-direction:column;gap:14px">
+      <p class="eyebrow" style="color:var(--orange)">What happens with one retry</p>
+      <div style="position:relative;height:200px">
+        <div style="display:grid;grid-template-columns:1fr 56px 1fr 56px 1fr 56px 1fr 56px 1fr;align-items:center">
+          <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Order<small>placed</small></div>
+          <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+          <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;border:2px dashed var(--orange);color:var(--orange)">Payment<small style="color:var(--cream-soft)">down, retry later</small></div>
+          <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+          <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Inventory<small>stock reserved</small></div>
+          <div class="arrow-h" style="flex:none;margin:0 10px 0 6px"></div>
+          <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">Shipping<small>parcel sent</small></div>
+          <div class="arrow-h orange" style="flex:none;margin:0 10px 0 6px"></div>
+          <div class="node svc" style="height:110px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;border-color:var(--orange)">Payment<small>card declined</small></div>
+        </div>
+        <svg viewBox="0 0 1696 90" width="1696" height="90" style="position:absolute;left:0;top:110px" aria-hidden="true">
+          <defs><marker id="ord-ah" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#F26B43"/></marker></defs>
+          <path d="M497 6 V56 H1547 V12" stroke="#F26B43" stroke-width="3" stroke-dasharray="12 9" fill="none" marker-end="url(#ord-ah)"/>
+        </svg>
+        <p style="position:absolute;left:600px;top:174px;width:840px;text-align:center;font-size:24px;color:var(--orange)">the retry arrives after the parcel has already left</p>
+      </div>
+    </div>
+    <div class="card" style="flex-direction:row;align-items:center;gap:32px;padding:32px 40px">
+      <span class="ico blue"><svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+      <p style="font-size:28px;line-height:1.45">If services rely on message order, they are tightly coupled, and you can’t just add retries. Keep those steps in one service, or make the dependency explicit: shipping waits for both <code>payment.charged</code> and <code>stock.reserved</code>.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    The biggest trap: tightly coupled services. Take a classic shop. An order is placed, payment charges the card, inventory reserves the stock, shipping sends the parcel. On a whiteboard that’s four nice independent services. But they rely on the order of messages: shipping assumes the payment already went through, because it always came first. Now the payment service is down for a minute, and its message goes into a retry. Inventory and shipping don’t know that: they just process their messages. The parcel leaves the warehouse. A minute later the retry runs, and the card is declined. Now you have a parcel on the road and no money. With a message bus you can’t just add retries when order matters. Either those steps belong together in one service, one transaction, the good old Django way, or you make the dependency explicit: shipping waits until it has seen both “payment charged” and “stock reserved”. That pattern is called a saga, and it’s more work than it looks.
+  </aside>
+</section>
+
+<!-- ============================================================
+     03 · LIVE DEMO: PONY EXPRESS  (code in ../demo)
+     ============================================================ -->
+
+<!-- 23 · Section divider -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="justify-content:center;gap:24px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <img src="assets/pony.svg" alt="" style="position:absolute;right:200px;top:380px;width:420px;margin:0">
+    <p class="num" style="font-size:220px !important">03</p>
+    <h2 style="font-size:96px;max-width:1100px;line-height:1.08">Live demo: Pony Express</h2>
+    <p class="sub" style="margin-top:12px;max-width:1000px">Mail delivery by magical pony</p>
+  </div>
+  <aside class="notes">
+    Enough theory. Let’s build a herd. The classic microservice demo is an online shop, but we just saw why a shop needs extra steps. So instead: a mail delivery service, run by magical ponies.
+  </aside>
+</section>
+
+<!-- 24 · The rules -->
+<section data-background-color="#2A2926">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Live demo</p>
+      <h2>The rules of Pony Express</h2>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 560px;gap:64px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;gap:28px;align-items:baseline"><p class="num" style="font-size:44px !important;width:64px;flex:none">01</p><p>Letters pile up at the post office and go into the <span style="color:var(--blue-soft)">mailbag</span>, a queue.</p></div>
+        <div style="display:flex;gap:28px;align-items:baseline"><p class="num" style="font-size:44px !important;width:64px;flex:none">02</p><p>Magical ponies take one letter at a time to the village.</p></div>
+        <div style="display:flex;gap:28px;align-items:baseline"><p class="num" style="font-size:44px !important;width:64px;flex:none">03</p><p>Some ponies <span style="color:var(--orange)">get lost</span> (10 %), some stop for a <span style="color:var(--orange)">long snack</span> (15 %).</p></div>
+        <div style="display:flex;gap:28px;align-items:baseline"><p class="num" style="font-size:44px !important;width:64px;flex:none">04</p><p>No receipt within 8 seconds? <b>Print the letter again.</b></p></div>
+        <div style="display:flex;gap:28px;align-items:baseline"><p class="num" style="font-size:44px !important;width:64px;flex:none">05</p><p>Duplicates are fine. Every letter arrives <i>eventually</i>.</p></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:32px;align-items:center">
+        <img src="assets/pony.svg" alt="The Django pony" style="width:280px;margin:0">
+        <div class="card" style="gap:12px;width:100%;box-sizing:border-box">
+          <p class="title">Why not a shop?</p>
+          <p class="body">Letters don’t depend on each other. No order, no transactions, so retries are safe.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    The rules. Letters pile up at the post office and go into the mailbag: our queue. Ponies take one letter at a time and carry it to the village. Not every trip goes well: one in ten ponies gets distracted by a rainbow and loses the letter, some stop for a very long snack. The post office doesn’t care why. If there’s no receipt within eight seconds, it prints the letter again and puts the copy back into the mailbag. So some houses get a letter twice. That’s fine: what matters is that every letter arrives eventually. That’s called at-least-once delivery. And it works here, unlike in the shop, because letters don’t depend on each other.
+  </aside>
+</section>
+
+<!-- 25 · Demo architecture -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Live demo</p>
+      <h2>The herd behind Pony Express</h2>
+    </div>
+    <div style="position:relative;width:1696px;height:600px">
+
+      <div class="box" style="left:420px;top:0;width:520px;height:600px;background:var(--light-panel);border:2px dashed var(--taupe-ink);box-shadow:none">
+        <p class="t">RabbitMQ</p>
+        <p class="d">one topic exchange, three queues</p>
+      </div>
+      <svg viewBox="0 0 1696 600" width="1696" height="600" style="position:absolute;left:0;top:0" aria-hidden="true">
+        <defs>
+          <marker id="px-ah" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#766C5B"/></marker>
+          <marker id="px-ah-o" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#F26B43"/></marker>
+        </defs>
+        <g stroke="#766C5B" stroke-width="3" fill="none" marker-end="url(#px-ah)">
+          <path d="M322 140 H456"/>
+          <path d="M902 155 H1016"/>
+          <path d="M1322 165 H1392"/>
+          <path d="M1170 242 V345 H904"/>
+          <path d="M458 345 H324"/>
+          <path d="M902 515 H1016"/>
+        </g>
+        <path d="M322 410 H386 V185 H456" stroke="#F26B43" stroke-width="3" stroke-dasharray="12 9" fill="none" marker-end="url(#px-ah-o)"/>
+      </svg>
+      <div class="box" style="left:460px;top:110px;width:440px;height:90px;padding:14px 22px;justify-content:center"><p class="t" style="font-size:26px">mailbag</p><p class="d">letter.posted</p></div>
+      <div class="box" style="left:460px;top:300px;width:440px;height:90px;padding:14px 22px;justify-content:center"><p class="t" style="font-size:26px">postoffice.receipts</p><p class="d">picked_up · delivered · pony.*</p></div>
+      <div class="box" style="left:460px;top:470px;width:440px;height:90px;padding:14px 22px;justify-content:center"><p class="t" style="font-size:26px">logbook</p><p class="d"># (every message)</p></div>
+
+      <div class="box accent" style="left:0;top:90px;width:320px;height:130px;justify-content:center"><p class="t">Post office</p><p class="d">Django · own SQLite</p></div>
+      <div class="box accent" style="left:0;top:300px;width:320px;height:150px;justify-content:center"><p class="t">Postmaster</p><p class="d">same Django project, reprints overdue letters</p></div>
+      <div class="box" style="left:1020px;top:90px;width:300px;height:150px;justify-content:center;border-color:var(--blue-soft)"><p class="t">Ponies ×N</p><p class="d">plain Python, scale with --scale</p></div>
+      <p style="position:absolute;left:1322px;top:118px;width:70px;text-align:center;font-size:24px;color:var(--taupe-ink)">HTTP</p>
+      <div class="box accent" style="left:1396px;top:90px;width:300px;height:150px;justify-content:center"><p class="t">Village</p><p class="d">Django · own SQLite</p></div>
+      <div class="box" style="left:1020px;top:450px;width:300px;height:130px;justify-content:center"><p class="t">Logbook</p><p class="d">plain Python, reads #</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    Here’s the herd. The post office is a Django project with its own database. When you post a letter, it goes onto the bus with the routing key “letter.posted” and lands in the mailbag queue. Ponies, plain Python, as many as you like, take letters from the mailbag, report “picked up”, and deliver over plain HTTP to the village, another Django project with its own database. Their receipts go to a second queue, read by the postmaster: the same Django project as the post office, but a separate process, a management command. It tracks the herd and reprints overdue letters, that’s the orange line. And the logbook subscribes to everything. No service had to change for it to exist.
+  </aside>
+</section>
+
+<!-- 26 · The code -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="gap:36px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Live demo</p>
+      <h2>The whole trick in 20 lines</h2>
+    </div>
+    <div class="cards c2" style="gap:40px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h3>The pony: take, ack, deliver</h3>
+        <pre><code class="language-python" data-trim>
+for method, _, body in channel.consume(MAILBAG):
+    letter = decode(body)
+    # The letter is ours now.
+    channel.basic_ack(method.delivery_tag)
+    publish(channel, PICKED_UP, receipt(letter))
+
+    if deliver(pony, letter):
+        publish(channel, DELIVERED, receipt(letter))
+    publish(channel, PONY_READY, {"pony": pony})
+        </code></pre>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h3>The postmaster: no receipt, no problem</h3>
+        <pre><code class="language-python" data-trim>
+def reprint_overdue(self):
+    overdue = Letter.objects.filter(
+        status=Letter.Status.PICKED_UP,
+        deadline__lt=timezone.now(),
+    )
+    for letter in overdue:
+        letter.attempt += 1
+        letter.status = Letter.Status.QUEUED
+        letter.save()
+        publish(self.channel, POSTED,
+                letter.as_message())
+        </code></pre>
+      </div>
+    </div>
+    <p style="color:var(--taupe)">At-least-once delivery: acknowledge early, reprint late, accept duplicates.</p>
+  </div>
+  <aside class="notes">
+    That’s really the whole trick. On the left, the pony: it takes a letter from the mailbag and acknowledges it right away, so the letter is gone from the queue. Then it tells the post office “picked up”, travels, and if the delivery works, sends “delivered”. On the right, the postmaster, a plain Django management command with the ORM: every second it looks for letters that were picked up but whose deadline has passed, bumps the copy number and puts the letter back into the mailbag. No distributed transaction, no exactly-once magic. Acknowledge early, reprint late, accept duplicates.
+  </aside>
+</section>
+
+<!-- 27 · Demo script -->
+<section data-background-color="#FDFBF7" class="light">
+  <div class="frame">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Live demo</p>
+      <h2>Let’s break things</h2>
+      <p class="sub" style="font-size:28px !important">Commands run with <span class="cmd" style="font-size:24px">docker compose …</span></p>
+    </div>
+    <div class="cards c3" style="flex:1;align-content:center;gap:24px">
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">01</p><p class="title">Happy path</p><p><span class="cmd">Post 10 letters</span></p><p class="body" style="font-size:26px">Some get reprinted, some arrive twice. Fine.</p></div>
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">02</p><p class="title">A burst</p><p><span class="cmd">up -d --scale pony=10</span></p><p class="body" style="font-size:26px">The mailbag grows, a bigger herd drains it.</p></div>
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">03</p><p class="title">The village is closed</p><p><span class="cmd">stop village</span></p><p class="body" style="font-size:26px">Ponies find nobody home. Nothing is lost.</p></div>
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">04</p><p class="title">No ponies at all</p><p><span class="cmd">stop pony</span></p><p class="body" style="font-size:26px">Letters wait in the mailbag until the herd is back.</p></div>
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">05</p><p class="title">Postmaster on a break</p><p><span class="cmd">stop postmaster</span></p><p class="body" style="font-size:26px">Receipts pile up, then it catches up.</p></div>
+      <div class="card" style="padding:30px 32px;gap:12px"><p class="num" style="font-size:36px !important">06</p><p class="title">Logging for free</p><p><span class="cmd">logs -f logbook</span></p><p class="body" style="font-size:26px">Every message, without touching a service.</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    Demo checklist. Open the post office on :8001, the village on :8002 and the RabbitMQ Queues tab on :15672 (user pony, password express). 1: post 10 letters, point at the herd box and the reprinted copies. Then click “Post a letter the pony will lose”: the pony goes missing, copy 2 is printed after 8 seconds, and only copy 2 arrives in the village. 2: post 100, watch the mailbag grow, then scale the herd to 10. 3: stop the village, post 10, ponies find nobody home; start it again, everything arrives. 4: stop all ponies, letters wait in the mailbag; start them. 5: stop the postmaster, the receipts queue grows in RabbitMQ; start it, it catches up. 6: show the logbook. Reset afterwards: docker compose down -v, then up -d.
+
+    <p>OPTIONAL, IF THERE’S TIME. 7: The bus loses its memory. docker compose stop pony, post 10 letters, then docker compose up -d --force-recreate rabbitmq, then docker compose start pony. The post office still lists the 10 letters as “In the mailbag”, but the bus shows 0: they are gone for good. A recreated container gets a new hostname, and RabbitMQ starts with an empty data directory. The post office only reprints letters a pony picked up, so nobody notices. Same as the customer project: if the bus loses its data, the data is lost.</p>
+    <p>Live fix A, give the bus a memory. In docker-compose.yml, under the rabbitmq service add: hostname: rabbitmq, and volumes: - rabbitmq-data:/var/lib/rabbitmq. At the bottom, under volumes, add: rabbitmq-data:. Then docker compose up -d. Careful: applying this recreates RabbitMQ once, so do it while the mailbag is empty. Then repeat scenario 7: the letters survive.</p>
+    <p>Live fix B, the post office is the local cache. Its database still knows every letter, so reprint everything that is waiting:</p>
+    <p><code>docker compose exec postoffice python manage.py shell -c "import ponybus; from letters.models import Letter; c, ch = ponybus.connect(); [ponybus.publish(ch, ponybus.POSTED, l.as_message()) for l in Letter.objects.filter(status='queued')]"</code></p>
+    <p>The lost letters go out again. Any that were still in the mailbag arrive twice, and that’s fine. Point: a local copy of what you sent is the cheap insurance the customer decided against.</p>
+  </aside>
+</section>
+
+<!-- ============================================================
+     04 · PONY OR HERD?
+     ============================================================ -->
+
+<!-- 28 · Section divider -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="justify-content:center;gap:24px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <p class="num" style="font-size:220px !important">04</p>
+    <h2 style="font-size:96px;max-width:1400px;line-height:1.08">Pony or herd?</h2>
+    <p class="sub" style="margin-top:12px">When one buffed-up pony beats a herd of little ones</p>
+  </div>
+  <aside class="notes">
+    So, back to the question from the teaser: should you take your Django from pony to herd?
+  </aside>
+</section>
+
+<!-- 29 · Conclusion -->
+<section data-background-color="#2A2926">
+  <div class="frame" style="gap:40px">
+    <img class="logo" src="assets/beyonder-logo-light.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Conclusion</p>
+      <h2>Pony or herd?</h2>
+    </div>
+    <div class="cards c2" style="flex:1;align-content:center">
+      <div class="card" style="gap:24px;padding:40px 44px">
+        <div class="icon-title" style="gap:28px;height:120px">
+          <img src="assets/pony.svg" alt="One big pony" style="width:160px;margin:0">
+          <div><h3>One buffed-up pony</h3><p class="soft" style="font-size:26px">a well-structured monolith</p></div>
+        </div>
+        <ul class="checks" style="gap:18px">
+          <li><span class="ico sm"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>One team, one codebase, one deploy</li>
+          <li><span class="ico sm"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Steps depend on each other: transactions just work</li>
+          <li><span class="ico sm"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Load grows evenly: a bigger server will do</li>
+          <li><span class="ico sm"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Background jobs? Give the pony a saddlebag: Celery</li>
+        </ul>
+      </div>
+      <div class="card" style="gap:24px;padding:40px 44px">
+        <div class="icon-title" style="gap:28px;height:120px">
+          <div style="display:flex;align-items:flex-end;gap:6px;width:240px;flex:none">
+            <img src="assets/pony.svg" alt="" style="width:56px;margin:0 0 16px">
+            <img src="assets/pony.svg" alt="" style="width:56px;margin:0">
+            <img src="assets/pony.svg" alt="" style="width:56px;margin:0 0 24px">
+            <img src="assets/pony.svg" alt="" style="width:56px;margin:0 0 6px">
+          </div>
+          <div><h3>A herd of little ponies</h3><p class="soft" style="font-size:26px">microservices on a bus</p></div>
+        </div>
+        <ul class="checks" style="gap:18px">
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Parts scale very differently</li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><span>Events stand alone, order doesn’t matter<span style="color:var(--blue-soft)">*</span></span></li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Parts must keep working when others fail</li>
+          <li><span class="ico sm blue"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Teams or tools need to move on their own</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:40px;font-weight:600;line-height:1.3">Start with a buffed-up pony. Grow a herd only for the parts that need to scale, fail or ship on their own.</p>
+    <p class="soft" style="position:absolute;left:112px;bottom:52px;width:1600px;font-size:24px;line-height:1.4"><span style="color:var(--blue-soft)">*</span> When order does matter, a <span style="font-weight:600;color:var(--cream)">saga</span> coordinates the steps and undoes failed ones with compensating actions, like a refund.</p>
+  </div>
+  <aside class="notes">
+    So when is one buffed-up pony better than a whole herd of little ones? A buffed-up pony is a well-structured Django monolith: clean apps with clear boundaries, on a bigger server with more workers when you need them. Choose it when one team works on it, when steps depend on each other, like the shop with payment, stock and shipping, where you want a database transaction, not a saga. Choose it when load grows evenly, because a bigger server is far cheaper than 43 repositories. And if you need background work, you don’t need a herd for that: Celery gives your pony a saddlebag, a queue without the herd.
+    A herd pays off when parts really are different. In the customer project, hundreds of devices send telemetry while a handful of operators look at a dashboard: those scale completely differently. The events stand alone, so order doesn’t matter and retries are safe. (The asterisk: when order does matter, like in the shop, a saga can coordinate the steps. Each service waits for the events it depends on, and if a step fails, the others undo their part with compensating actions: refund the payment, release the stock. It works, but it’s real extra work.) Alerts must keep working when the dashboard is down. And the AI pipeline needs different tools than a web app. Pony Express is the same: every letter stands alone, so a herd works.
+    So my advice: start with a buffed-up pony. Grow a herd only for the parts that need to scale, fail or ship on their own. Thank you!
+  </aside>
+</section>
+
+<!-- 30 · Questions -->
+<section data-background-color="#FDFBF7" class="light">
+  <!-- the frame gets the slide colour itself, so the image below has something to multiply against -->
+  <div class="frame" style="gap:24px;background:var(--light)">
+    <img class="logo" src="assets/beyonder-logo-dark.png" alt="Beyonder">
+    <div class="head">
+      <p class="eyebrow">Thank you!</p>
+      <h2>Questions?</h2>
+    </div>
+    <!-- multiply blends the JPEG's white background into the slide colour; the brightness
+         pushes its compression noise to pure white first, so no rectangle edge shows -->
+    <img src="assets/pony-question.jpeg" alt="A puzzled unicorn pony with question marks above its head"
+         style="position:absolute;left:50%;top:180px;height:740px;transform:translateX(-50%);filter:brightness(1.05);mix-blend-mode:multiply;margin:0">
+    <p class="soft" style="position:absolute;left:112px;bottom:56px;font-size:26px">Benedikt Bauer · bbauer.eu · Beyonder</p>
+  </div>
+  <aside class="notes">
+    Thank you! Questions? And if you run more ponies than I do, I’d love to hear how your herd behaves.
+  </aside>
+</section>
+
+
+</div>
+</div>
+
+<script src="vendor/reveal/reveal.js"></script>
+<script src="vendor/reveal/plugin/notes.js"></script>
+<script src="vendor/reveal/plugin/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1920,
+    height: 1080,
+    margin: 0,
+    minScale: 0.1,
+    maxScale: 2,
+    center: false,
+    hash: true,
+    slideNumber: 'c/t',
+    controls: false,
+    transition: 'fade',
+    backgroundTransition: 'fade',
+    plugins: [RevealNotes, RevealHighlight],
+  });
+</script>
+</body>
+</html>

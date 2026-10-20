@@ -1,0 +1,182 @@
+/* From Pony to Herd — theme derived from the Beyonder SlideDeck v1.0.7 template */
+
+@font-face { font-family: "Poppins"; font-weight: 400; font-style: normal; src: url(../vendor/fonts/poppins-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 400; font-style: italic; src: url(../vendor/fonts/poppins-latin-400-italic.woff2) format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 500; font-style: normal; src: url(../vendor/fonts/poppins-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 600; font-style: normal; src: url(../vendor/fonts/poppins-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Poppins"; font-weight: 700; font-style: normal; src: url(../vendor/fonts/poppins-latin-700-normal.woff2) format("woff2"); }
+
+:root {
+  /* dark (template masters 1–9) */
+  --dark: #2A2926;
+  --dark-card: #33312E;
+  --dark-line: #4A4740;
+  --cream: #F7F4EF;
+  --cream-soft: #DBD5CA;
+  --taupe: #AFA593;
+  /* light (template masters 10–12) */
+  --light: #FDFBF7;
+  --light-panel: #F6F1E7;
+  --light-card: #FFFEFB;
+  --light-line: #E4DDD0;
+  --ink: #2A2926;
+  --ink-soft: #57524A;
+  --taupe-ink: #766C5B;
+  /* accents */
+  --blue-deep: #3542C0;
+  --blue: #4A5BF5;
+  --blue-mid: #557BE9;
+  --blue-soft: #7591E9;
+  --blue-pale: #DDE6FE;
+  --orange: #F26B43;
+
+  --pad-x: 112px;
+  --pad-top: 88px;
+  --pad-bottom: 120px;
+}
+
+/* ---------- reveal base ---------- */
+.reveal-viewport { background: var(--dark); }
+.reveal {
+  font-family: "Poppins", Arial, sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--cream);
+}
+.reveal .slides { text-align: left; }
+.reveal .slides section { padding: 0; height: 1080px; box-sizing: border-box; }
+.reveal ::selection { background: var(--blue-mid); color: #fff; }
+.reveal .slide-number {
+  background: transparent; font-family: "Poppins", Arial, sans-serif;
+  font-size: 20px; color: var(--taupe); right: 24px; bottom: 18px;
+}
+.reveal .slide-number a { text-decoration: none; color: inherit; }
+.reveal .progress { color: var(--blue-mid); height: 4px; }
+.reveal .controls { color: var(--taupe); }
+
+/* every slide's content lives in a frame so we can use flex layout
+   (reveal toggles display on <section> itself) */
+.frame {
+  position: relative;
+  width: 1920px; height: 1080px;
+  box-sizing: border-box;
+  padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  display: flex; flex-direction: column; gap: 48px;
+}
+.light .frame { color: var(--ink); }
+
+.logo { position: absolute; top: 72px; right: var(--pad-x); width: 150px; height: auto; }
+
+/* ---------- type ---------- */
+.reveal h1, .reveal h2, .reveal h3, .reveal p { margin: 0; font-family: inherit; text-transform: none; letter-spacing: 0; text-shadow: none; word-wrap: normal; }
+.reveal h1 { font-size: 150px; font-weight: 600; line-height: 1.02; color: var(--cream); }
+.reveal h2 { font-size: 64px; font-weight: 600; line-height: 1.15; color: inherit; }
+.reveal h3 { font-size: 36px; font-weight: 600; line-height: 1.25; color: inherit; }
+.reveal p, .reveal li { font-size: 30px; line-height: 1.45; }
+.reveal ul { margin: 0; padding: 0; list-style: none; display: block; }
+.reveal code { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; font-size: 0.9em; }
+
+.eyebrow { font-size: 24px !important; font-weight: 500; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--taupe); }
+.light .eyebrow { color: var(--taupe-ink); }
+.sub { font-size: 32px !important; color: var(--taupe); }
+.light .sub { color: var(--taupe-ink); }
+.soft { color: var(--cream-soft); }
+.light .soft { color: var(--ink-soft); }
+.head { display: flex; flex-direction: column; gap: 12px; max-width: 1450px; }
+
+/* ---------- cards ---------- */
+.card { background: var(--dark-card); border-radius: 20px; padding: 40px; display: flex; flex-direction: column; gap: 16px; }
+.light .card { background: var(--light-card); border: 2px solid var(--light-line); box-shadow: 0 8px 24px rgba(42, 41, 38, 0.06); }
+.cards { display: grid; gap: 32px; }
+.cards.c2 { grid-template-columns: 1fr 1fr; }
+.cards.c3 { grid-template-columns: repeat(3, 1fr); }
+.cards.c4 { grid-template-columns: repeat(4, 1fr); }
+
+.num { font-size: 56px !important; font-weight: 700; line-height: 1 !important; color: var(--blue-soft); }
+.card .title { font-size: 34px; font-weight: 600; color: var(--taupe); line-height: 1.25; }
+.card .body { font-size: 28px; color: var(--cream-soft); }
+.light .card .title { color: var(--ink); }
+.light .card .body { color: var(--ink-soft); }
+
+/* icon in a circle — the deck's recurring motif (template: Oval + Grafik) */
+.ico { flex: none; width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; background: var(--taupe); color: var(--dark); }
+.ico svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ico.blue { background: var(--blue-pale); color: var(--blue-deep); }
+.ico.orange { background: #FDE1D8; color: #B7411D; }
+.ico.sm { width: 52px; height: 52px; }
+.ico.sm svg { width: 28px; height: 28px; }
+.icon-title { display: flex; align-items: center; gap: 24px; }
+
+/* check / warn lists */
+.reveal .checks { display: flex; flex-direction: column; gap: 28px; }
+.checks li { display: flex; align-items: center; gap: 20px; }
+
+/* ---------- diagrams ---------- */
+.node {
+  border-radius: 16px; padding: 20px 28px; text-align: center;
+  font-size: 30px; font-weight: 500; line-height: 1.3;
+}
+.node small { display: block; font-size: 24px; font-weight: 400; margin-top: 4px; }
+.light .node.svc  { background: var(--light-card); border: 2px solid var(--light-line); color: var(--ink); }
+.light .node.svc small { color: var(--ink-soft); }
+.light .node.gw   { background: var(--ink); color: var(--cream); }
+.light .node.bus  { background: var(--light-panel); border: 2px dashed var(--taupe-ink); color: var(--ink); }
+.light .node.db   { background: var(--blue-pale); color: var(--blue-deep); }
+.node.chip { display: inline-flex; align-items: center; gap: 10px; justify-content: center; border-radius: 999px; padding: 8px 20px; font-size: 24px; font-weight: 500; margin-top: 16px; }
+.node.chip svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.dark-nodes .node.svc { background: var(--dark); border: 2px solid var(--dark-line); color: var(--cream); padding: 16px 12px; font-size: 26px; }
+.dark-nodes .node.bus { background: transparent; border: 2px dashed var(--taupe); color: var(--taupe); padding: 16px 12px; font-size: 26px; }
+
+.row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
+.row4.center { justify-items: center; }
+
+/* arrows drawn in CSS so they follow the theme */
+.arrow-v { position: relative; width: 3px; height: 56px; background: var(--taupe-ink); margin: 0 auto; }
+.arrow-v::after { content: ""; position: absolute; bottom: -4px; left: -9px; border-left: 10.5px solid transparent; border-right: 10.5px solid transparent; border-top: 16px solid var(--taupe-ink); }
+.arrow-v.both::before { content: ""; position: absolute; top: -4px; left: -9px; border-left: 10.5px solid transparent; border-right: 10.5px solid transparent; border-bottom: 16px solid var(--taupe-ink); }
+.arrow-v.dashed { background: repeating-linear-gradient(to bottom, var(--taupe-ink) 0 8px, transparent 8px 14px); }
+
+.arrow-h { position: relative; height: 3px; background: var(--taupe); flex: 1; min-width: 48px; }
+.arrow-h::after { content: ""; position: absolute; right: -4px; top: -9px; border-top: 10.5px solid transparent; border-bottom: 10.5px solid transparent; border-left: 16px solid var(--taupe); }
+.arrow-h.back::after { right: auto; left: -4px; border-left: 0; border-right: 16px solid var(--taupe); }
+
+/* ---------- statement slide ---------- */
+.statement .frame { justify-content: center; }
+.statement h2 { font-size: 112px; line-height: 1.1; color: var(--cream); }
+
+/* coloured arrow variants: orange = commands to the device, blue = data back */
+.arrow-h.orange { background: var(--orange); }
+.arrow-h.orange::after { border-left-color: var(--orange); }
+.arrow-h.blue { background: var(--blue-mid); }
+.arrow-h.blue.back::after { border-right-color: var(--blue-mid); }
+.arrow-v.orange { background: var(--orange); }
+.arrow-v.orange::after { border-top-color: var(--orange); }
+
+/* flow chains of pills ("A → B → C") */
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 12px; }
+.pill { font-size: 24px !important; line-height: 1.3 !important; padding: 10px 20px; border-radius: 999px; background: var(--dark); border: 2px solid var(--dark-line); color: var(--cream); white-space: nowrap; }
+.light .pill { background: var(--light-panel); border-color: var(--light-line); color: var(--ink); }
+.pill.hl { border-color: var(--blue-soft); color: var(--blue-soft); }
+.light .pill.hl { border-color: var(--blue-deep); color: var(--blue-deep); }
+.flow .to { color: var(--taupe); font-size: 26px; }
+.flow .step { display: inline-flex; align-items: center; gap: 12px; }
+
+/* left-aligned box used in architecture diagrams */
+.box { position: absolute; box-sizing: border-box; border-radius: 18px; padding: 22px 26px; display: flex; flex-direction: column; gap: 6px; }
+.light .box { background: var(--light-card); border: 2px solid var(--light-line); box-shadow: 0 6px 18px rgba(42, 41, 38, 0.05); }
+.box .t { font-size: 30px; font-weight: 600; line-height: 1.25; }
+.box .d { font-size: 24px; line-height: 1.35; color: var(--ink-soft); }
+.light .box.accent { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+.light .box.accent .d { color: var(--cream-soft); }
+
+/* code blocks (highlight.js, monokai) */
+.reveal pre { width: 100%; margin: 0; font-size: 24px; line-height: 1.5; box-shadow: none; }
+.reveal pre { flex: 1; display: flex; }
+.reveal pre code { display: block; flex: 1; box-sizing: border-box; max-height: none; padding: 28px 32px; border-radius: 16px; background: #1F1E1C; }
+.reveal .pill code, .reveal .cmd { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
+.cmd { display: inline-block; font-size: 24px !important; padding: 6px 16px; border-radius: 10px; background: var(--ink); color: var(--cream); white-space: nowrap; }
+
+/* reveal's reset.css sets `font: inherit` on everything, which un-bolds <b> and un-italicises <i> */
+.reveal b, .reveal strong { font-weight: 600; }
+.reveal i, .reveal em { font-style: italic; }

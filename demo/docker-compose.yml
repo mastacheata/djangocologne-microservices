@@ -1,0 +1,91 @@
+name: pony-express
+
+x-bus: &bus
+  AMQP_URL: amqp://pony:express@rabbitmq:5672/%2F
+
+services:
+  # The message bus. Management UI: http://localhost:15672 (pony / express)
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: pony
+      RABBITMQ_DEFAULT_PASS: express
+    ports:
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq/advanced.config:/etc/rabbitmq/advanced.config:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  # Django: post letters, watch them travel. http://localhost:8001
+  postoffice:
+    build: { context: ., dockerfile: postoffice/Dockerfile }
+    environment:
+      <<: *bus
+      DELIVERY_TIMEOUT: "8"
+    ports:
+      - "8001:8000"
+    volumes:
+      - postoffice-data:/data
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # Same Django project, different process: reads pony receipts, reprints overdue letters.
+  postmaster:
+    restart: unless-stopped   # a worker exits when the bus goes away; come back and reconnect
+    build: { context: ., dockerfile: postoffice/Dockerfile }
+    command: ["python", "manage.py", "postmaster"]
+    environment:
+      <<: *bus
+      DELIVERY_TIMEOUT: "8"
+    volumes:
+      - postoffice-data:/data
+    depends_on:
+      postoffice: { condition: service_healthy }
+
+  # Django: the houses and their mailboxes. http://localhost:8002
+  village:
+    build: { context: ., dockerfile: village/Dockerfile }
+    ports:
+      - "8002:8000"
+    volumes:
+      - village-data:/data
+
+  # The magical ponies. Scale the herd: docker compose up -d --scale pony=10
+  pony:
+    restart: unless-stopped   # a worker exits when the bus goes away; come back and reconnect
+    build: { context: ., dockerfile: pony/Dockerfile }
+    environment:
+      <<: *bus
+      VILLAGE_URL: http://village:8000/api/deliveries/
+      LOST_RATE: "0.10"     # pony gets distracted, loses the letter and wanders off
+      LOST_SECONDS: "20"    # how long it takes a lost pony to find its way back
+      SLOW_RATE: "0.15"     # pony stops for a long snack (longer than DELIVERY_TIMEOUT)
+      SLOW_SECONDS: "12"
+      TRAVEL_MIN: "1"
+      TRAVEL_MAX: "3"
+    deploy:
+      replicas: 3
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+
+  # Subscribes to every message on the bus. docker compose logs -f logbook
+  logbook:
+    restart: unless-stopped   # a worker exits when the bus goes away; come back and reconnect
+    build: { context: ., dockerfile: logbook/Dockerfile }
+    environment:
+      <<: *bus
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+
+volumes:
+  postoffice-data:
+  village-data:

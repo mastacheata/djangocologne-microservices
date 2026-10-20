@@ -1,0 +1,173 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pony Express · Post Office</title>
+  <style>
+    :root {
+      --bg: #2A2926; --card: #33312E; --line: #4A4740; --text: #F7F4EF; --soft: #DBD5CA;
+      --taupe: #AFA593; --blue: #7591E9; --blue-deep: #3542C0; --orange: #F26B43; --green: #7BC8A4;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 18px/1.45 system-ui, "Segoe UI", sans-serif; }
+    main { max-width: 1280px; margin: 0 auto; padding: 40px 32px; display: flex; flex-direction: column; gap: 28px; }
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+    .eyebrow { margin: 0; color: var(--taupe); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 4px 0 0; font-size: 40px; }
+    nav a { color: var(--blue); margin-left: 20px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    button { font: inherit; font-weight: 600; border: 0; border-radius: 999px; padding: 12px 24px; cursor: pointer;
+             background: var(--blue-deep); color: var(--text); }
+    button.big { background: var(--orange); color: #2A2926; }
+    button.lose { background: transparent; color: var(--orange); box-shadow: inset 0 0 0 2px var(--orange); }
+    .tag { display: inline-block; margin-left: 8px; padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+           background: #4A3A2E; color: var(--orange); vertical-align: middle; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #error { color: var(--orange); font-weight: 600; }
+    .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+    .tile { background: var(--card); border-radius: 16px; padding: 18px 20px; }
+    .tile .n { font-size: 44px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .tile .l { color: var(--soft); font-size: 15px; }
+    .tile.bag .n { color: var(--orange); }
+    .tile.ok .n { color: var(--green); }
+    .tile.copies .n, .tile.dupes .n { color: var(--blue); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 16px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+    th { color: var(--taupe); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; }
+    td.num { font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; padding: 2px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+    .pill.queued { background: #4A3A2E; color: var(--orange); }
+    .pill.picked_up { background: #2E3550; color: var(--blue); }
+    .pill.delivered { background: #2C4238; color: var(--green); }
+    .muted { color: var(--taupe); }
+    .herd { background: var(--card); border-radius: 16px; padding: 20px 28px; display: grid;
+            grid-template-columns: 150px auto 1fr; gap: 32px; align-items: center; }
+    .herd img { width: 150px; height: auto; display: block; }
+    .herd-counts { display: flex; gap: 32px; }
+    .herd-counts .n { font-size: 44px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .herd-counts .l { color: var(--soft); font-size: 15px; }
+    .herd-counts .available .n { color: var(--green); }
+    .herd-counts .on_the_road .n { color: var(--blue); }
+    .herd-counts .missing .n { color: var(--orange); }
+    .ponies { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pony { padding: 4px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+    .pony.available { background: #2C4238; color: var(--green); }
+    .pony.on_the_road { background: #2E3550; color: var(--blue); }
+    .pony.missing { background: #4A3A2E; color: var(--orange); }
+    @media (max-width: 900px) {
+      .tiles { grid-template-columns: repeat(2, 1fr); }
+      .herd { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <p class="eyebrow">Pony Express</p>
+      <h1>Post Office</h1>
+    </div>
+    <nav>
+      <a href="http://localhost:8002/" target="_blank">The village →</a>
+      <a href="http://localhost:15672/#/queues" target="_blank">The bus →</a>
+    </nav>
+  </header>
+
+  <form class="actions" id="post-form">
+    {% csrf_token %}
+    <button type="button" data-count="1">Post 1 letter</button>
+    <button type="button" data-count="10">Post 10</button>
+    <button type="button" data-count="100" class="big">Post 100</button>
+    <button type="button" data-count="1" data-lose="1" class="lose">Post a letter the pony will lose</button>
+    <span id="error"></span>
+  </form>
+
+  <section class="tiles">
+    <div class="tile bag"><div class="n" id="mailbag">–</div><div class="l">in the mailbag (bus)</div></div>
+    <div class="tile"><div class="n" id="picked_up">–</div><div class="l">with a pony</div></div>
+    <div class="tile ok"><div class="n" id="delivered">–</div><div class="l">delivered</div></div>
+    <div class="tile"><div class="n" id="posted">–</div><div class="l">letters posted</div></div>
+    <div class="tile copies"><div class="n" id="reprints">–</div><div class="l">reprinted copies</div></div>
+    <div class="tile dupes"><div class="n" id="duplicates">–</div><div class="l">arrived more than once</div></div>
+  </section>
+
+  <section class="herd">
+    <img src="{% static 'letters/pony.svg' %}" alt="The Django pony">
+    <div class="herd-counts">
+      <div class="available"><div class="n" id="herd-available">–</div><div class="l">ponies available</div></div>
+      <div class="on_the_road"><div class="n" id="herd-on_the_road">–</div><div class="l">on the road</div></div>
+      <div class="missing"><div class="n" id="herd-missing">–</div><div class="l">gone missing</div></div>
+    </div>
+    <div class="ponies" id="ponies"><span class="muted">Waiting for ponies to report for duty…</span></div>
+  </section>
+
+  <table>
+    <thead><tr><th>Letter</th><th>To</th><th>House</th><th>Status</th><th>Pony</th><th>Copies</th><th>Arrived</th></tr></thead>
+    <tbody id="recent"><tr><td colspan="7" class="muted">No letters yet. Post some!</td></tr></tbody>
+  </table>
+</main>
+
+<script>
+  const csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
+  const error = document.getElementById("error");
+  const escape = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+  document.querySelectorAll("#post-form button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      error.textContent = "";
+      try {
+        const response = await fetch("/api/letters/", {
+          method: "POST",
+          headers: {"X-CSRFToken": csrf},
+          body: new URLSearchParams({count: button.dataset.count, lose_first_copy: button.dataset.lose || "0"}),
+        });
+        if (!response.ok) error.textContent = (await response.json()).error || "Posting failed.";
+      } catch (e) {
+        error.textContent = "The post office is unreachable.";
+      } finally {
+        button.disabled = false;
+        refresh();
+      }
+    });
+  });
+
+  async function refresh() {
+    try {
+      const stats = await (await fetch("/api/stats/")).json();
+      document.getElementById("mailbag").textContent = stats.mailbag === null ? "bus down" : stats.mailbag;
+      for (const key of ["picked_up", "delivered", "posted", "reprints", "duplicates"]) {
+        document.getElementById(key).textContent = stats[key];
+      }
+      for (const [status, count] of Object.entries(stats.herd)) {
+        document.getElementById(`herd-${status}`).textContent = count;
+      }
+      document.getElementById("ponies").innerHTML = stats.ponies.length
+        ? stats.ponies.map((p) => `
+          <span class="pony ${escape(p.status)}" title="${escape(p.status_label)}${p.letter ? " · letter " + escape(p.letter) : ""}">
+            ${escape(p.name)}
+          </span>`).join("")
+        : '<span class="muted">No ponies on duty.</span>';
+      if (stats.recent.length) {
+        document.getElementById("recent").innerHTML = stats.recent.map((l) => `
+          <tr>
+            <td class="num">${escape(l.id)}${l.lose_first_copy ? '<span class="tag">first copy gets lost</span>' : ""}</td>
+            <td>${escape(l.recipient)}</td>
+            <td>${escape(l.house)}</td>
+            <td><span class="pill ${escape(l.status)}">${escape(l.status_label)}</span></td>
+            <td>${l.pony ? escape(l.pony) : '<span class="muted">–</span>'}</td>
+            <td class="num">${l.copies}</td>
+            <td class="num">${l.deliveries ? l.deliveries + "×" : '<span class="muted">–</span>'}</td>
+          </tr>`).join("");
+      }
+    } catch (e) {
+      /* the post office itself is down; try again on the next tick */
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 1000);
+</script>
+</body>
+</html>

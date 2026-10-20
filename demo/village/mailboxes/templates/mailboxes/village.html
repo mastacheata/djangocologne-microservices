@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pony Express · The Village</title>
+  <style>
+    :root {
+      --bg: #FDFBF7; --panel: #F6F1E7; --card: #FFFEFB; --line: #E4DDD0; --ink: #2A2926; --soft: #57524A;
+      --taupe: #766C5B; --blue: #3542C0; --blue-pale: #DDE6FE; --orange: #B7411D; --orange-pale: #FDE1D8;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.45 system-ui, "Segoe UI", sans-serif; }
+    main { max-width: 1280px; margin: 0 auto; padding: 40px 32px; display: grid; grid-template-columns: 1fr 380px; gap: 32px; }
+    header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
+    .eyebrow { margin: 0; color: var(--taupe); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 4px 0 0; font-size: 40px; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    .totals { display: flex; gap: 28px; }
+    .totals div { text-align: right; }
+    .totals .n { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .totals .l { color: var(--soft); font-size: 14px; }
+    .houses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-content: start; }
+    .house { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 18px 20px; min-height: 150px;
+             display: flex; flex-direction: column; gap: 6px; }
+    .house .roof { font-size: 30px; line-height: 1; }
+    .house .name { font-weight: 600; }
+    .house .n { font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .badge { align-self: flex-start; padding: 2px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--blue-pale); color: var(--blue); }
+    .feed { background: var(--panel); border-radius: 18px; padding: 20px; }
+    .feed ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .feed li { background: var(--card); border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+    .feed li b { font-weight: 600; }
+    .feed .meta { color: var(--soft); font-size: 13px; }
+    .feed .again { color: var(--orange); background: var(--orange-pale); border-radius: 999px; padding: 0 8px; font-weight: 600; font-size: 12px; }
+    .muted { color: var(--taupe); }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } .houses { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <p class="eyebrow">Pony Express</p>
+      <h1>The Village</h1>
+    </div>
+    <div class="totals">
+      <div><div class="n" id="letters">0</div><div class="l">different letters</div></div>
+      <div><div class="n" id="deliveries">0</div><div class="l">deliveries</div></div>
+      <div><div class="n" id="duplicates">0</div><div class="l">duplicates (that’s fine)</div></div>
+    </div>
+  </header>
+
+  <section class="houses" id="houses"><p class="muted">No post yet. The ponies are on their way.</p></section>
+
+  <aside class="feed">
+    <h2>Just arrived</h2>
+    <ul id="recent"><li class="muted">Nothing yet.</li></ul>
+  </aside>
+</main>
+
+<script>
+  const escape = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+  async function refresh() {
+    try {
+      const data = await (await fetch("/api/summary/")).json();
+      for (const key of ["letters", "deliveries", "duplicates"]) document.getElementById(key).textContent = data[key];
+      if (data.houses.length) {
+        document.getElementById("houses").innerHTML = data.houses.map((h) => `
+          <div class="house">
+            <div class="roof">🏠</div>
+            <div class="name">${escape(h.house)}</div>
+            <div class="n">${h.letters}</div>
+            ${h.duplicates ? `<span class="badge">+${h.duplicates} duplicate${h.duplicates > 1 ? "s" : ""}</span>` : ""}
+          </div>`).join("");
+      }
+      if (data.recent.length) {
+        document.getElementById("recent").innerHTML = data.recent.map((d) => `
+          <li>
+            <b>${escape(d.recipient)}</b>, ${escape(d.house)} ${d.repeat ? '<span class="again">again</span>' : ""}<br>
+            “${escape(d.text)}”<br>
+            <span class="meta">letter ${escape(d.id)} · copy ${d.copy} · by ${escape(d.pony)}</span>
+          </li>`).join("");
+      }
+    } catch (e) {
+      /* the village is down; try again on the next tick */
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 1000);
+</script>
+</body>
+</html>
